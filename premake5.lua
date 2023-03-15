@@ -1,5 +1,5 @@
 -- main solution file.
-workspace "GCC++"
+workspace "GC-Cpp"
     architecture "x64"
 
     configurations 
@@ -12,8 +12,8 @@ workspace "GCC++"
 outputdir = "%{cfg.buildcfg}-%{cfg.architecture}"
 
 -- Application project
-project "GCC++"
-    location "GCC++"
+project "GC-Cpp"
+    location "GC-Cpp"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++17"
