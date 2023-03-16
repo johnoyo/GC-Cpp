@@ -20,13 +20,15 @@ public:
 	{
 
 	}
-private:
 	Specification m_Specification;
+private:
 };
 
 void TestCopy(Ref<TestApp> application)
 {
+	application->m_Specification.ID = 2;
 	Ref<TestApp> application1 = application;
+	application1->m_Specification.ID = 3;
 }
 
 void TestRef(Ref<TestApp>& application)
@@ -50,8 +52,9 @@ int main()
 		TestRef(application);
 
 		Ref<TestApp> application1 = application;
-
+		application1->m_Specification.ID = 2;
 		Ref<TestApp>& application2 = application;
+		application2->m_Specification.ID = 3;
 	}
 
 	{

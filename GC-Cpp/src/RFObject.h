@@ -13,8 +13,14 @@ public:
 	template <typename... Ts>
 	RFObject(Ts&... Args)
 	{
-		LOG("RFObject Constructed.");
 		m_IObject = new T(std::forward<Ts>(Args)...);
+		s_RFObjectLib.push_back(this);
+	}
+
+	RFObject(T* object)
+	{
+		m_IObject = (T*)malloc(sizeof(T));
+		std::memcpy(m_IObject, object, sizeof(T));
 		s_RFObjectLib.push_back(this);
 	}
 

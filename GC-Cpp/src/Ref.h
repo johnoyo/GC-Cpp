@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Log.h"
+#include "RFObject.h"
 
 #include <string>
 #include <utility>
@@ -11,19 +12,13 @@ class Ref
 public:
 	Ref()
 	{
-		if (m_RFObject)
-		{
-			LOG("Constructor: Ref count -> %d.", m_RFObject->GetRef());
-		}
+
 	}
 
-	Ref(const Ref& ref)
+	Ref(const Ref& otherRef)
 	{
-		if (m_RFObject == nullptr)
-			m_RFObject = ref.m_RFObject;
-
+		m_RFObject = new RFObject<T>(otherRef.m_RFObject->GetIObject());
 		m_RFObject->IncrRef();
-		LOG("Copy Constructor: Ref count -> %d.", m_RFObject->GetRef());
 	}
 
 	~Ref()
@@ -31,7 +26,6 @@ public:
 		if (m_RFObject)
 		{
 			m_RFObject->DecrRef();
-			LOG("Destructor: Ref count -> %d.", m_RFObject->GetRef());
 		}
 	}
 
@@ -47,7 +41,6 @@ public:
 
 	auto operator->()
 	{
-		LOG("Operator -> called.");
 		return m_RFObject->GetIObject();
 	}
 
@@ -56,7 +49,7 @@ private:
 };
 
 template<typename T, typename... Ts>
-static Ref<T>& MakeRef(Ts... Args)
+static Ref<T> MakeRef(Ts... Args)
 {
 	RFObject<T>* rfObject = new RFObject<T>(std::forward<Ts>(Args)...);
 	Ref<T> ref;
