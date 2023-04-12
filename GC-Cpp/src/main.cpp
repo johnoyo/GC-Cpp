@@ -44,6 +44,20 @@ int main()
 	specification.Enabled = true;
 
 	{
+		Ref<TestApp> app1 = MakeRef<TestApp>(specification);
+		app1->m_Specification.ID = 1;
+		Ref<TestApp> app2 = MakeRef<TestApp>(specification);
+		app2->m_Specification.ID = 2;
+
+		app1 = app2;
+
+		Ref<TestApp> app3 = MakeRef<TestApp>(specification);
+		app3->m_Specification.ID = 3;
+
+		app2 = app3.Get();
+	}
+
+	{
 		Ref<TestApp> application = MakeRef<TestApp>(specification);
 		application->Start();
 
@@ -55,6 +69,8 @@ int main()
 		application1->m_Specification.ID = 2;
 		Ref<TestApp>& application2 = application;
 		application2->m_Specification.ID = 3;
+
+		application = application1;
 	}
 
 	{

@@ -33,6 +33,9 @@ public:
 	{
 		if (m_RefCount)
 			m_RefCount--;
+
+		if (m_RefCount == 0)
+			LOG("Ref count of object: %p is 0", m_IObject);
 	}
 
 	uint32_t GetRef() const
