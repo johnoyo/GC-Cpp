@@ -11,17 +11,20 @@ class RFObject
 {
 public:
 	template <typename... Ts>
-	RFObject(Ts&... Args)
+	RFObject(Ts&&... Args)
 	{
 		m_IObject = new T(std::forward<Ts>(Args)...);
+		m_RefCount++;
 		s_RFObjectLib.push_back(this);
 	}
 
-	RFObject(T* object)
+	~RFObject()
 	{
-		m_IObject = (T*)malloc(sizeof(T));
-		std::memcpy(m_IObject, object, sizeof(T));
-		s_RFObjectLib.push_back(this);
+		if (m_IObject != nullptr)
+		{
+			LOG("   Freeing memory of object: %p", m_IObject);
+			delete m_IObject;
+		}
 	}
 
 	void IncrRef()
@@ -35,7 +38,11 @@ public:
 			m_RefCount--;
 
 		if (m_RefCount == 0)
+		{
 			LOG("Ref count of object: %p is 0", m_IObject);
+			LOG("Freeing memory of object: %p", this);
+			delete this;
+		}
 	}
 
 	uint32_t GetRef() const
@@ -46,6 +53,11 @@ public:
 	T* GetIObject() const
 	{
 		return m_IObject;
+	}
+
+	void SetIObject(T* object)
+	{
+		m_IObject = object;
 	}
 
 	static std::vector<RFObject*>& GetRFObjectLib()

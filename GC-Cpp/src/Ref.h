@@ -5,19 +5,18 @@
 
 #include <string>
 #include <utility>
+#include <thread>
+#include <chrono>
 
 template<typename T>
 class Ref
 {
 public:
-	Ref()
-	{
-
-	}
+	Ref() = default;
 
 	Ref(const Ref& otherRef)
 	{
-		m_RFObject = new RFObject<T>(otherRef.m_RFObject->GetIObject());
+		m_RFObject = otherRef.m_RFObject;
 		m_RFObject->IncrRef();
 	}
 
@@ -44,9 +43,15 @@ public:
 		return m_RFObject->GetIObject();
 	}
 
+	T& operator*()
+	{
+		return *(m_RFObject->GetIObject());
+	}
+
 	void operator=(const Ref<T>& otherRef)
 	{
-		m_RFObject->DecrRef();
+		if (m_RFObject)
+			m_RFObject->DecrRef();
 
 		m_RFObject = otherRef.m_RFObject;
 		m_RFObject->IncrRef();
@@ -69,13 +74,13 @@ public:
 			}
 		}
 
-		m_RFObject = new RFObject<T>(otherRef);
+		m_RFObject->SetIObject(otherRef);
 		m_RFObject->IncrRef();
 	}
 
-	T& operator*()
+	void operator[](int index)
 	{
-		return *(m_RFObject->GetIObject());
+		LOG("operator[]");
 	}
 
 private:
@@ -83,7 +88,7 @@ private:
 };
 
 template<typename T, typename... Ts>
-static Ref<T>& MakeRef(Ts... Args)
+static Ref<T> MakeRef(Ts&&... Args)
 {
 	RFObject<T>* rfObject = new RFObject<T>(std::forward<Ts>(Args)...);
 	Ref<T> ref;
