@@ -1,7 +1,14 @@
-#include "RFObject.h"
-#include "Ref.h"
+#include "ReferenceCount/GCRC1/RCObject.h"
+#include "ReferenceCount/GCRC1/Ref.h"
+
+#include "ReferenceCount/GCRC2/RCObject.h"
+#include "ReferenceCount/GCRC2/Ref.h"
+
+#include "ReferenceCount/GCRC3/RCObject.h"
+#include "ReferenceCount/GCRC3/Ref.h"
 
 #include <memory>
+#include <assert.h>
 
 struct Specification
 {
@@ -27,86 +34,203 @@ public:
 private:
 };
 
-void TestCopy(Ref<TestApp> application)
+#define ITERATIONS 30
+#define POINTERS 1000
+
+void BenchmarkVanilla()
 {
-	application->m_Specification.ID = 2;
-	Ref<TestApp> application1 = application;
-	application1->m_Specification.ID = 3;
+	{
+		PROFILE("BenchmarkVanilla");
+
+		for (int i = 0; i < ITERATIONS; i++)
+		{
+			GCRC1::Ref<int> pointersOuter[2 * POINTERS];
+			for (int i = 0; i < 2 * POINTERS; i++)
+				pointersOuter[i] = GCRC1::MakeRef<int>(i + 100);
+
+			{
+				GCRC1::Ref<int> pointersInner[POINTERS];
+				for (int i = 0; i < POINTERS; i++)
+					pointersInner[i] = GCRC1::MakeRef<int>(i - 100);
+
+				for (int i = 0; i < POINTERS; i++)
+					pointersOuter[i] = pointersInner[i];
+
+				int sum = 0;
+				for (int i = 0; i < POINTERS; i++)
+				{
+					sum += *pointersOuter[i];
+				}
+			}
+		}
+	}
+
+	std::cout << "	Garbage size: " << ITERATIONS * 3 * POINTERS << " Garbage collected: " << GCRC1::RCObject<int>::GarbageCollected << std::endl;
 }
 
-void TestRef(Ref<TestApp>& application)
+void BenchmarkInterval()
 {
-	Ref<TestApp> application1 = application;
+	GCRC2::RCObject<int>::Initialize(300);
+
+	{
+		PROFILE("BenchmarkInterval");
+
+		for (int i = 0; i < ITERATIONS; i++)
+		{
+			GCRC2::Ref<int> pointersOuter[2 * POINTERS];
+			for (int i = 0; i < 2 * POINTERS; i++)
+				pointersOuter[i] = GCRC2::MakeRef<int>(i + 100);
+
+			{
+				GCRC2::Ref<int> pointersInner[POINTERS];
+				for (int i = 0; i < POINTERS; i++)
+					pointersInner[i] = GCRC2::MakeRef<int>(i - 100);
+
+				for (int i = 0; i < POINTERS; i++)
+					pointersOuter[i] = pointersInner[i];
+
+				int sum = 0;
+				for (int i = 0; i < POINTERS; i++)
+				{
+					sum += *pointersOuter[i];
+				}
+			}
+		}
+	}
+
+	std::cout << "	Garbage size: " << ITERATIONS * 3 * POINTERS << " Garbage collected: " << GCRC2::RCObject<int>::GarbageCollected << std::endl;
+}
+
+void BenchmarkGarbageSize()
+{
+	GCRC3::RCObject<int>::Initialize(300, 5000000);
+
+	{
+		PROFILE("BenchmarkGarbageSize");
+
+		for (int i = 0; i < ITERATIONS; i++)
+		{
+			GCRC3::Ref<int> pointersOuter[2 * POINTERS];
+			for (int i = 0; i < 2 * POINTERS; i++)
+				pointersOuter[i] = GCRC3::MakeRef<int>(i + 100);
+
+			{
+				GCRC3::Ref<int> pointersInner[POINTERS];
+				for (int i = 0; i < POINTERS; i++)
+					pointersInner[i] = GCRC3::MakeRef<int>(i - 100);
+
+				for (int i = 0; i < POINTERS; i++)
+					pointersOuter[i] = pointersInner[i];
+
+				int sum = 0;
+				for (int i = 0; i < POINTERS; i++)
+				{
+					sum += *pointersOuter[i];
+				}
+			}
+		}
+	}
+
+	std::cout << "	Garbage size: " << ITERATIONS * 3 * POINTERS << " Garbage collected: " << GCRC3::RCObject<int>::GarbageCollected << std::endl;
 }
 
 void BenchmarkSharedPtr()
 {
-	FUNC_PROFILE();
+	{
+		PROFILE("BenchmarkSharedPtr");
 
-	const int num_ptrs = 50000;
-	const int num_iterations = 100;
+		for (int i = 0; i < ITERATIONS; i++)
+		{
+			std::shared_ptr<int> pointersOuter[2 * POINTERS];
+			for (int i = 0; i < 2 * POINTERS; i++)
+				pointersOuter[i] = std::make_shared<int>(i + 100);
 
-	for (int i = 0; i < num_iterations; i++) {
-		std::shared_ptr<int> ptrs[num_ptrs];
-		for (int j = 0; j < num_ptrs; j++) {
-			ptrs[j] = std::make_shared<int>(j);
-		}
-		int sum = 0;
-		for (int j = 0; j < num_ptrs; j++) {
-			sum += *ptrs[j];
+			{
+				std::shared_ptr<int> pointersInner[POINTERS];
+				for (int i = 0; i < POINTERS; i++)
+					pointersInner[i] = std::make_shared<int>(i - 100);
+
+				for (int i = 0; i < POINTERS; i++)
+					pointersOuter[i] = pointersInner[i];
+
+				int sum = 0;
+				for (int i = 0; i < POINTERS; i++)
+				{
+					sum += *pointersOuter[i];
+				}
+			}
 		}
 	}
-
-	return;
 }
 
-void BenchmarkRef()
+void BenchmarkRawPtr()
 {
-	FUNC_PROFILE();
+	{
+		PROFILE("BenchmarkRawPtr");
 
-	const int num_ptrs = 50000;
-	const int num_iterations = 100;
+		for (int i = 0; i < ITERATIONS; i++)
+		{
+			int* pointersOuter[2 * POINTERS];
+			for (int i = 0; i < 2 * POINTERS; i++)
+				pointersOuter[i] = new int(i + 100);
 
-	for (int i = 0; i < num_iterations; i++) {
-		Ref<int> ptrs[num_ptrs];
-		for (int j = 0; j < num_ptrs; j++) {
-			ptrs[j] = MakeRef<int>(j);
-		}
-		int sum = 0;
-		for (int j = 0; j < num_ptrs; j++) {
-			sum += *ptrs[j];
+			{
+				int* pointersInner[POINTERS];
+				for (int i = 0; i < POINTERS; i++)
+					pointersInner[i] = new int(i - 100);
+
+				for (int i = 0; i < POINTERS; i++)
+				{
+					delete pointersOuter[i];
+					pointersOuter[i] = pointersInner[i];
+				}
+
+				int sum = 0;
+				for (int i = 0; i < POINTERS; i++)
+				{
+					sum += *pointersOuter[i];
+				}
+			}
+
+			for (int i = 0; i < 2 * POINTERS; i++)
+				delete pointersOuter[i];
 		}
 	}
-
-	return;
 }
 
 int main()
 {
+	// Performance Benchmarks.
+
+	BenchmarkVanilla();
+	BenchmarkInterval();
+	BenchmarkGarbageSize();
+	BenchmarkRawPtr();
+	BenchmarkSharedPtr();
+
 	Specification specification;
 	specification.ID = 1;
 	specification.Name = "Sample App";
 	specification.Enabled = true;
 
-	BenchmarkRef();
-	BenchmarkSharedPtr();
+	// Test for correctness compared to std::shared_ptr.
 
 	{
 		PROFILE("Ref");
 
-		Ref<TestApp> app1 = MakeRef<TestApp>(specification);
+		GCRC1::Ref<TestApp> app1 = GCRC1::MakeRef<TestApp>(specification);
 		app1->m_Specification.ID = 1;
-		Ref<TestApp> app2 = MakeRef<TestApp>(specification);
+		GCRC1::Ref<TestApp> app2 = GCRC1::MakeRef<TestApp>(specification);
 		app2->m_Specification.ID = 2;
 
 		app1 = app2;
 
-		Ref<TestApp> app3 = MakeRef<TestApp>(specification);
+		GCRC1::Ref<TestApp> app3 = GCRC1::MakeRef<TestApp>(specification);
 		app3->m_Specification.ID = 3;
 
 		app2 = app3;
 
-		Ref<TestApp> app4 = MakeRef<TestApp>(specification);
+		GCRC1::Ref<TestApp> app4 = GCRC1::MakeRef<TestApp>(specification);
 		app4->m_Specification.ID = 4;
 
 		app1 = app4;
@@ -131,31 +255,6 @@ int main()
 		app4->m_Specification.ID = 4;
 
 		app1 = app4;
-	}
-
-	{
-		Ref<TestApp> application = MakeRef<TestApp>(specification);
-		application->Start();
-
-		TestCopy(application);
-
-		TestRef(application);
-
-		Ref<TestApp> application1 = application;
-		application1->m_Specification.ID = 2;
-		Ref<TestApp>& application2 = application;
-		application2->m_Specification.ID = 3;
-
-		application = application1;
-	}
-
-	{
-		std::shared_ptr<TestApp> application = std::make_shared<TestApp>(specification);
-
-		std::shared_ptr<TestApp> application1 = application;
-		application1->m_Specification.ID = 2;
-		std::shared_ptr<TestApp> application2 = application;
-		application2->m_Specification.ID = 3;
 	}
 
 	return 0;

@@ -14,7 +14,7 @@ public:
     ~ProfilerScope()
     {
         auto timeEnd = std::chrono::high_resolution_clock::now();
-        std::cout << m_Name << " running time: " << std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - m_TimeStart).count() << " milliseconds.\n";
+        std::cout << m_Name << " running time: " << std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - m_TimeStart).count() << " ms.\n";
     }
 private:
     std::string m_Name;

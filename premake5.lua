@@ -44,3 +44,4 @@ filter "configurations:Debug"
 filter "configurations:Release"
     defines { "RELEASE" }
     optimize "on"
+    symbols "off"
